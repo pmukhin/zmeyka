@@ -74,6 +74,7 @@ impl Snake {
 
     pub fn make_move(&mut self, growing: bool) {
         let head = self.head();
+
         let mut new_x = head.0;
         let mut new_y = head.1;
 
@@ -96,7 +97,9 @@ impl Snake {
             Direction::Left => {
                 if new_x == 0 {
                     new_x = self.width_cells - 1;
-                } else { new_x -= 1 }
+                } else {
+                    new_x -= 1
+                }
             }
             Direction::Right => {
                 if new_x == self.width_cells - 1 {

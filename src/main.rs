@@ -24,7 +24,7 @@ fn load_config() -> Result<Config, Error> {
 fn main() {
     let config = load_config().unwrap();
 
-    let mut snake = Snake::new(config.width_cells, config.width_cells);
+    let mut snake = Snake::new(config.width_cells, config.height_cells);
     let mut game = Game::new(
         config.cell_size,
         config.width_cells,
