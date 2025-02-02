@@ -12,6 +12,14 @@ use crate::snake::{Direction, Pt, Snake};
 
 const COLOR_LIGHT_LIGHT_GRAY: Color = Color::new(0, 0, 0, 16);
 
+#[derive(PartialEq)]
+enum State {
+    Running,
+    Paused,
+    GameOver,
+    PopExit,
+}
+
 pub struct Game<'a> {
     cell_size: i32,
     width_cells: i32,
@@ -24,10 +32,8 @@ pub struct Game<'a> {
     food_pt: Pt,
     counter: u64,
     score: usize,
-    paused: bool,
-    game_over: bool,
-    pop_exit: bool,
     start_time: Instant,
+    state: State,
 }
 
 impl<'a> Game<'a> {
@@ -53,10 +59,8 @@ impl<'a> Game<'a> {
             food_pt: Default::default(),
             counter: 0,
             score: 0,
-            paused: false,
-            game_over: false,
-            pop_exit: false,
             start_time: Instant::now(),
+            state: State::Running,
         }
     }
 }
@@ -82,7 +86,7 @@ impl Game<'_> {
             self.snake.reset();
             self.score = 0;
             self.start_time = Instant::now();
-            self.game_over = false;
+            self.state = State::Running;
         }
     }
 
@@ -185,11 +189,11 @@ impl Game<'_> {
     }
 
     pub fn draw_pop_ups(&mut self, d: &mut impl RaylibDraw) {
-        if self.pop_exit {
+        if self.state == State::PopExit {
             self.pop_up(d, "To exit, press Enter, to resume, press Space");
         }
 
-        if self.paused {
+        if self.state == State::Paused {
             self.pop_up(d, "Press Enter to continue!");
         }
     }
@@ -199,7 +203,8 @@ impl Game<'_> {
     }
 
     pub fn should_make_move(&self) -> bool {
-        self.counter % 5 == 0 && !self.paused && !self.pop_exit
+        self.counter % 5 == 0 && self.state == State::Running
+        // !self.paused && !self.pop_exit
     }
 
     pub fn step(&mut self) {
@@ -216,60 +221,72 @@ impl Game<'_> {
             }
 
             if self.snake.collapsed_into_self() {
-                self.game_over = true;
+                self.state = State::GameOver;
             }
-            if !self.game_over {
+
+            if self.state != State::GameOver {
                 self.snake.make_move(growing);
             }
         }
     }
 
-    pub fn run(&mut self, rl: &mut RaylibHandle, texture: &Texture2D, thread: &RaylibThread) {
-        while !rl.window_should_close() {
-            if rl.is_key_pressed(KEY_LEFT) {
-                self.snake.set_direction(Direction::Left);
-            } else if rl.is_key_pressed(KEY_RIGHT) {
-                self.snake.set_direction(Direction::Right);
-            } else if rl.is_key_pressed(KEY_UP) {
-                self.snake.set_direction(Direction::Up);
-            } else if rl.is_key_pressed(KEY_DOWN) {
-                self.snake.set_direction(Direction::Down);
-            } else if rl.is_key_pressed(KEY_SPACE) && !self.game_over && !self.pop_exit {
-                self.paused = true;
-            } else if rl.is_key_pressed(KEY_ENTER) && self.paused {
-                self.paused = false;
-            } else if rl.is_key_down(KEY_LEFT_CONTROL) && rl.is_key_pressed(KEY_C) {
-                self.pop_exit = true;
-            } else if rl.is_key_pressed(KEY_ENTER) && self.pop_exit {
-                exit(0);
-            } else if rl.is_key_pressed(KEY_SPACE) && self.pop_exit {
-                self.pop_exit = false;
-            }
+    fn draw(&mut self, d: &mut RaylibDrawHandle, texture: &Texture2D) {
+        d.clear_background(Color::WHITE);
 
+        if self.state != State::GameOver {
+            self.draw_piggy(d, texture);
+            self.draw_snake(d);
+            self.draw_lines(d);
+            self.draw_score(d);
+        } else {
+            self.on_game_over(d);
+        }
+
+        self.draw_pop_ups(d);
+        self.inc_counter();
+    }
+
+    fn consume_keyboard_input(&mut self, rl: &mut RaylibHandle) {
+        if rl.is_key_pressed(KEY_LEFT) {
+            self.snake.set_direction(Direction::Left);
+        } else if rl.is_key_pressed(KEY_RIGHT) {
+            self.snake.set_direction(Direction::Right);
+        } else if rl.is_key_pressed(KEY_UP) {
+            self.snake.set_direction(Direction::Up);
+        } else if rl.is_key_pressed(KEY_DOWN) {
+            self.snake.set_direction(Direction::Down);
+        } else if rl.is_key_pressed(KEY_SPACE) && self.state == State::Running {
+            self.state = State::Paused;
+        } else if rl.is_key_pressed(KEY_ENTER) && self.state == State::Paused {
+            self.state = State::Running;
+        } else if rl.is_key_down(KEY_LEFT_CONTROL) && rl.is_key_pressed(KEY_C) {
+            self.state = State::PopExit;
+        } else if rl.is_key_pressed(KEY_ENTER) && self.state == State::PopExit {
+            exit(0);
+        } else if rl.is_key_pressed(KEY_SPACE) && self.state == State::PopExit {
+            self.state = State::Running;
+        }
+    }
+
+    pub fn run(
+        &mut self,
+        rl: &mut RaylibHandle,
+        texture: &Texture2D,
+        thread: &RaylibThread,
+    ) {
+        while !rl.window_should_close() {
+            self.consume_keyboard_input(rl);
             self.step();
 
             let mut d = rl.begin_drawing(thread);
 
-            d.clear_background(Color::WHITE);
-
-            if !self.game_over {
-                self.draw_piggy(&mut d, &texture);
-                self.draw_snake(&mut d);
-                self.draw_lines(&mut d);
-                self.draw_score(&mut d);
-            } else {
-                self.on_game_over(&mut d);
-            }
-
-            self.draw_pop_ups(&mut d);
-            self.inc_counter();
+            self.draw(&mut d, &texture);
         }
     }
 }
 
+#[inline]
 fn curr_duration_formatted(start_time: &Instant) -> String {
     let duration = Instant::now() - *start_time;
-    let minutes = duration.as_secs() / 60;
-    let seconds = duration.as_secs() % 60;
-    format!("{:02}:{:02}", minutes, seconds)
+    format!("{:02}:{:02}", duration.as_secs() / 60, duration.as_secs() % 60)
 }

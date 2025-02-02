@@ -1,5 +1,4 @@
 use std::collections::LinkedList;
-use crate::CELL_SIZE;
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Direction {
@@ -34,6 +33,7 @@ pub struct Snake {
 impl Snake {
     pub fn new(width_cells: i32, height_cells: i32) -> Snake {
         let mut body = LinkedList::new();
+
         body.push_back(Pt(0, 0));
         body.push_back(Pt(1, 0));
         body.push_back(Pt(2, 0));
@@ -51,6 +51,7 @@ impl Snake {
         self.body.push_back(Pt(0, 0));
         self.body.push_back(Pt(1, 0));
         self.body.push_back(Pt(2, 0));
+
         self.direction = Default::default();
     }
 
@@ -80,13 +81,13 @@ impl Snake {
         match self.direction {
             Direction::Up => {
                 if new_y == 0 {
-                    new_y = self.height_cells-1;
+                    new_y = self.height_cells - 1;
                 } else {
                     new_y -= 1
                 }
             }
             Direction::Down => {
-                if new_y == self.height_cells-1{
+                if new_y == self.height_cells - 1 {
                     new_y = 0;
                 } else {
                     new_y += 1
@@ -94,11 +95,11 @@ impl Snake {
             }
             Direction::Left => {
                 if new_x == 0 {
-                    new_x = self.width_cells-1;
+                    new_x = self.width_cells - 1;
                 } else { new_x -= 1 }
             }
             Direction::Right => {
-                if new_x == self.width_cells-1 {
+                if new_x == self.width_cells - 1 {
                     new_x = 0;
                 } else {
                     new_x += 1
@@ -106,10 +107,11 @@ impl Snake {
             }
         }
 
-        // Move the body: shift all segments forward
-        self.body.push_front(Pt(new_x, new_y)); // New head
+        self.body.push_front(Pt(new_x, new_y)); // O(1)
         if !growing {
-            self.body.pop_back(); // Remove the last segment (unless growing)
+            // also O(1) as this LL impl keeps a pointer to the
+            // penultimate element
+            self.body.pop_back();
         }
     }
 

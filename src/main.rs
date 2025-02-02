@@ -1,24 +1,35 @@
 mod snake;
 mod game;
-
 use game::Game;
-use rand::Rng;
-use raylib::consts::KeyboardKey::*;
-use raylib::prelude::*;
 use snake::Snake;
+use serde::Deserialize;
+use std::fs;
+use toml::de::Error;
 
-const TOP_MARGIN: i32 = 50;
-const CELL_SIZE: i32 = 30;
-const WIDTH_CELLS: i32 = 32;
-const HEIGHT_CELLS: i32 = 18;
+#[derive(Deserialize)]
+struct Config {
+    top_margin: i32,
+    cell_size: i32,
+    width_cells: i32,
+    height_cells: i32,
+}
+
+fn load_config() -> Result<Config, Error> {
+    let config_str = fs::read_to_string("config.toml")
+        .expect("can't open config.toml");
+
+    toml::from_str(&config_str)
+}
 
 fn main() {
-    let mut snake = Snake::new(WIDTH_CELLS, HEIGHT_CELLS);
+    let config = load_config().unwrap();
+
+    let mut snake = Snake::new(config.width_cells, config.width_cells);
     let mut game = Game::new(
-        CELL_SIZE,
-        WIDTH_CELLS,
-        HEIGHT_CELLS,
-        TOP_MARGIN,
+        config.cell_size,
+        config.width_cells,
+        config.height_cells,
+        config.top_margin,
         &mut snake,
     );
 
