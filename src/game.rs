@@ -204,7 +204,6 @@ impl Game<'_> {
 
     pub fn should_make_move(&self) -> bool {
         self.counter % 5 == 0 && self.state == State::Running
-        // !self.paused && !self.pop_exit
     }
 
     pub fn step(&mut self) {
