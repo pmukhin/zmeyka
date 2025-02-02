@@ -1,3 +1,4 @@
+use std::ffi::CString;
 use std::process::exit;
 use std::time::Instant;
 use rand::prelude::ThreadRng;
@@ -7,7 +8,7 @@ use raylib::consts::KeyboardKey::{KEY_C, KEY_DOWN, KEY_ENTER, KEY_LEFT, KEY_LEFT
 use raylib::drawing::{RaylibDraw, RaylibDrawHandle};
 use raylib::math::{Rectangle, Vector2};
 use raylib::prelude::{RaylibTexture2D, Texture2D};
-use raylib::{RaylibHandle, RaylibThread};
+use raylib::{ffi, RaylibHandle, RaylibThread};
 use crate::snake::{Direction, Pt, Snake};
 
 const COLOR_LIGHT_LIGHT_GRAY: Color = Color::new(0, 0, 0, 16);
@@ -169,23 +170,19 @@ impl Game<'_> {
     }
 
     pub fn pop_up(&self, d: &mut impl RaylibDraw, text: &str) {
-        let len_text = text.len() as f32 * 18.0; // font_size
-        let total_width = len_text + 10.0 + 6.0; // + 5px padding at every side + 3px line x 2
-        let total_margin = self.width as f32 - total_width;
-        let half_margin = total_margin / 2.0;
+        let len_text = measure_text(text, 20); // padding
+        let text_padding = (self.width - len_text) / 2;
 
         let popup_rect = Rectangle::new(
-            half_margin + 3.0,
+            text_padding as f32 - 30.0,
             200.0,
-            total_width - 6.0,
+            len_text as f32 + 60.0,
             80.0,
         );
-        let text_starts = (popup_rect.width - len_text) as i32 / 2;
 
         d.draw_rectangle_rec(popup_rect, Color::LIGHTGRAY);
         d.draw_rectangle_lines_ex(popup_rect, 3.0, Color::BLACK);
-
-        d.draw_text(text, half_margin as i32 + text_starts + 83, 230, 20, Color::BLACK);
+        d.draw_text(text, text_padding, 230, 20, Color::BLACK);
     }
 
     pub fn draw_pop_ups(&mut self, d: &mut impl RaylibDraw) {
@@ -288,4 +285,10 @@ impl Game<'_> {
 fn curr_duration_formatted(start_time: &Instant) -> String {
     let duration = Instant::now() - *start_time;
     format!("{:02}:{:02}", duration.as_secs() / 60, duration.as_secs() % 60)
+}
+
+#[inline]
+pub fn measure_text(text: &str, font_size: i32) -> i32 {
+    let c_text = CString::new(text).unwrap();
+    unsafe { ffi::MeasureText(c_text.as_ptr(), font_size) }
 }
