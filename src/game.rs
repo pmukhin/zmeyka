@@ -9,7 +9,7 @@ use raylib::math::{Rectangle, Vector2};
 use raylib::prelude::{RaylibTexture2D, Texture2D};
 use raylib::{RaylibHandle, RaylibThread};
 use crate::snake::{Direction, Pt, Snake};
-use crate::{curr_duration_formatted, CELL_SIZE, COLOR_LIGHT_LIGHT_GRAY, HEIGHT_CELLS, TOP_MARGIN, WIDTH_CELLS};
+use crate::{CELL_SIZE, COLOR_LIGHT_LIGHT_GRAY, HEIGHT_CELLS, TOP_MARGIN, WIDTH_CELLS};
 
 pub struct Game<'a> {
     width: i32,
@@ -255,4 +255,11 @@ impl Game<'_> {
             self.inc_counter();
         }
     }
+}
+
+fn curr_duration_formatted(start_time: &Instant) -> String {
+    let duration = Instant::now() - *start_time;
+    let minutes = duration.as_secs() / 60;
+    let seconds = duration.as_secs() % 60;
+    format!("{:02}:{:02}", minutes, seconds)
 }

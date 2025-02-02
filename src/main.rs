@@ -33,9 +33,3 @@ fn main() {
     game.run(&mut rl, &texture, &thread);
 }
 
-fn curr_duration_formatted(start_time: &Instant) -> String {
-    let duration = Instant::now() - *start_time;
-    let minutes = duration.as_secs() / 60;
-    let seconds = duration.as_secs() % 60;
-    format!("{:02}:{:02}", minutes, seconds)
-}
