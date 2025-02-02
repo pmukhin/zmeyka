@@ -1,3 +1,4 @@
+use std::collections::LinkedList;
 use crate::CELL_SIZE;
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
@@ -24,7 +25,7 @@ impl Default for Pt {
 }
 
 pub struct Snake {
-    body: Vec<Pt>,
+    body: LinkedList<Pt>,
     direction: Direction,
     width_cells: i32,
     height_cells: i32,
@@ -32,8 +33,13 @@ pub struct Snake {
 
 impl Snake {
     pub fn new(width_cells: i32, height_cells: i32) -> Snake {
+        let mut body = LinkedList::new();
+        body.push_back(Pt(0, 0));
+        body.push_back(Pt(1, 0));
+        body.push_back(Pt(2, 0));
+
         Snake {
-            body: vec![Pt(0, 0), Pt(1, 0), Pt(2, 0)],
+            body,
             direction: Default::default(),
             width_cells,
             height_cells,
@@ -41,12 +47,15 @@ impl Snake {
     }
 
     pub fn reset(&mut self) {
-        self.body = vec![Pt(0, 0), Pt(1, 0), Pt(2, 0)];
+        self.body = LinkedList::new();
+        self.body.push_back(Pt(0, 0));
+        self.body.push_back(Pt(1, 0));
+        self.body.push_back(Pt(2, 0));
         self.direction = Default::default();
     }
 
-    pub fn head(&self) -> Pt {
-        self.body[0]
+    pub fn head(&self) -> &Pt {
+        self.body.front().unwrap()
     }
 
     pub fn len(&self) -> usize {
@@ -54,8 +63,8 @@ impl Snake {
     }
 
     pub fn collapsed_into_self(&self) -> bool {
-        for i in 1..self.body.len() {
-            if self.body[i] == self.body[0] {
+        for elem in self.body.iter().skip(1) {
+            if elem == self.head() {
                 return true;
             }
         }
@@ -98,9 +107,9 @@ impl Snake {
         }
 
         // Move the body: shift all segments forward
-        self.body.insert(0, Pt(new_x, new_y)); // New head
+        self.body.push_front(Pt(new_x, new_y)); // New head
         if !growing {
-            self.body.pop(); // Remove the last segment (unless growing)
+            self.body.pop_back(); // Remove the last segment (unless growing)
         }
     }
 

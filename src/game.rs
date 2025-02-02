@@ -196,7 +196,7 @@ impl Game<'_> {
         if self.should_make_move() {
             let mut growing = false;
 
-            if self.snake.head() == self.food_pt {
+            if *self.snake.head() == self.food_pt {
                 self.food_pt = Pt(
                     self.rng.random_range(0..WIDTH_CELLS),
                     self.rng.random_range(0..HEIGHT_CELLS),
