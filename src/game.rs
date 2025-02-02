@@ -9,9 +9,14 @@ use raylib::math::{Rectangle, Vector2};
 use raylib::prelude::{RaylibTexture2D, Texture2D};
 use raylib::{RaylibHandle, RaylibThread};
 use crate::snake::{Direction, Pt, Snake};
-use crate::{CELL_SIZE, COLOR_LIGHT_LIGHT_GRAY, HEIGHT_CELLS, TOP_MARGIN, WIDTH_CELLS};
+
+const COLOR_LIGHT_LIGHT_GRAY: Color = Color::new(0, 0, 0, 16);
 
 pub struct Game<'a> {
+    cell_size: i32,
+    width_cells: i32,
+    height_cells: i32,
+    top_margin: i32,
     width: i32,
     height: i32,
     snake: &'a mut Snake,
@@ -30,12 +35,17 @@ impl<'a> Game<'a> {
         cell_size: i32,
         width_cells: i32,
         height_cells: i32,
+        top_margin: i32,
         snake: &'a mut Snake,
     ) -> Game<'a> {
         let width = cell_size * width_cells;
-        let height = cell_size * height_cells + TOP_MARGIN;
+        let height = cell_size * height_cells + top_margin;
 
         Game {
+            cell_size,
+            width_cells,
+            height_cells,
+            top_margin,
             width,
             height,
             snake,
@@ -85,27 +95,27 @@ impl Game<'_> {
         );
 
         let dest_rect = Rectangle::new(
-            self.food_pt.0 as f32 * CELL_SIZE as f32,
-            self.food_pt.1 as f32 * CELL_SIZE as f32 + TOP_MARGIN as f32,
-            CELL_SIZE as f32,
-            CELL_SIZE as f32,
+            self.food_pt.0 as f32 * self.cell_size as f32,
+            self.food_pt.1 as f32 * self.cell_size as f32 + self.top_margin as f32,
+            self.cell_size as f32,
+            self.cell_size as f32,
         );
 
-        for i in 0..HEIGHT_CELLS {
+        for i in 0..self.height_cells {
             d.draw_rectangle(
-                self.food_pt.0 * CELL_SIZE,
-                i * CELL_SIZE + TOP_MARGIN,
-                CELL_SIZE,
-                CELL_SIZE,
+                self.food_pt.0 * self.cell_size,
+                i * self.cell_size + self.top_margin,
+                self.cell_size,
+                self.cell_size,
                 COLOR_LIGHT_LIGHT_GRAY,
             );
         }
-        for j in 0..WIDTH_CELLS {
+        for j in 0..self.width_cells {
             d.draw_rectangle(
-                j * CELL_SIZE,
-                self.food_pt.1 * CELL_SIZE + TOP_MARGIN,
-                CELL_SIZE,
-                CELL_SIZE,
+                j * self.cell_size,
+                self.food_pt.1 * self.cell_size + self.top_margin,
+                self.cell_size,
+                self.cell_size,
                 COLOR_LIGHT_LIGHT_GRAY,
             );
         }
@@ -130,27 +140,27 @@ impl Game<'_> {
     pub fn draw_snake(&self, d: &mut impl RaylibDraw) {
         self.snake.draw(|x, y| {
             d.draw_rectangle(
-                x * CELL_SIZE,
-                y * CELL_SIZE + TOP_MARGIN,
-                CELL_SIZE,
-                CELL_SIZE,
+                x * self.cell_size,
+                y * self.cell_size + self.top_margin,
+                self.cell_size,
+                self.cell_size,
                 Color::BLACK,
             )
         });
     }
 
     pub fn draw_lines(&self, d: &mut impl RaylibDraw) {
-        let mut y = TOP_MARGIN;
+        let mut y = self.top_margin;
 
         while y < self.height {
             d.draw_line(0, y, self.width, y, Color::GRAY);
-            y += CELL_SIZE;
+            y += self.cell_size;
         }
 
-        let mut x = CELL_SIZE;
+        let mut x = self.cell_size;
         while x < self.width {
-            d.draw_line(x, TOP_MARGIN, x, self.height, Color::GRAY);
-            x += CELL_SIZE
+            d.draw_line(x, self.top_margin, x, self.height, Color::GRAY);
+            x += self.cell_size
         }
     }
 
@@ -198,8 +208,8 @@ impl Game<'_> {
 
             if *self.snake.head() == self.food_pt {
                 self.food_pt = Pt(
-                    self.rng.random_range(0..WIDTH_CELLS),
-                    self.rng.random_range(0..HEIGHT_CELLS),
+                    self.rng.random_range(0..self.width_cells),
+                    self.rng.random_range(0..self.height_cells),
                 );
                 self.score += 1;
                 growing = true;

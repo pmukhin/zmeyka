@@ -11,11 +11,16 @@ const TOP_MARGIN: i32 = 50;
 const CELL_SIZE: i32 = 30;
 const WIDTH_CELLS: i32 = 32;
 const HEIGHT_CELLS: i32 = 18;
-const COLOR_LIGHT_LIGHT_GRAY: Color = Color::new(0, 0, 0, 16);
 
 fn main() {
     let mut snake = Snake::new(WIDTH_CELLS, HEIGHT_CELLS);
-    let mut game = Game::new(CELL_SIZE, WIDTH_CELLS, HEIGHT_CELLS, &mut snake);
+    let mut game = Game::new(
+        CELL_SIZE,
+        WIDTH_CELLS,
+        HEIGHT_CELLS,
+        TOP_MARGIN,
+        &mut snake,
+    );
 
     let (mut rl, thread) = raylib::init()
         .size(game.width(), game.height())
