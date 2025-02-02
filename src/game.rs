@@ -4,7 +4,7 @@ use std::time::Instant;
 use rand::prelude::ThreadRng;
 use rand::Rng;
 use raylib::color::Color;
-use raylib::consts::KeyboardKey::{KEY_C, KEY_DOWN, KEY_ENTER, KEY_LEFT, KEY_LEFT_CONTROL, KEY_RIGHT, KEY_SPACE, KEY_UP};
+use raylib::consts::KeyboardKey::{KEY_C, KEY_F, KEY_DOWN, KEY_ENTER, KEY_LEFT, KEY_LEFT_CONTROL, KEY_RIGHT, KEY_SPACE, KEY_UP};
 use raylib::drawing::{RaylibDraw, RaylibDrawHandle};
 use raylib::math::{Rectangle, Vector2};
 use raylib::prelude::{RaylibTexture2D, Texture2D};
@@ -79,16 +79,12 @@ impl Game<'_> {
         &mut self,
         d: &mut RaylibDrawHandle,
     ) {
-        let text =
-            format!("Game over! Your score is {}.\n\n\n Start again? Press Enter!", self.score);
-        d.draw_text(&text, 260, 239, 32, Color::BLACK);
+        let text = format!(
+            "Game over! Your score is {}. Start again? Press Enter!",
+            self.score
+        );
 
-        if d.is_key_pressed(KEY_ENTER) {
-            self.snake.reset();
-            self.score = 0;
-            self.start_time = Instant::now();
-            self.state = State::Running;
-        }
+        self.pop_up(d, &text);
     }
 
     pub fn draw_piggy(&self, d: &mut impl RaylibDraw, texture: &Texture2D) {
@@ -260,6 +256,13 @@ impl Game<'_> {
         } else if rl.is_key_pressed(KEY_ENTER) && self.state == State::PopExit {
             exit(0);
         } else if rl.is_key_pressed(KEY_SPACE) && self.state == State::PopExit {
+            self.state = State::Running;
+        } else if rl.is_key_pressed(KEY_F) && self.state == State::Running {
+            self.state = State::GameOver;
+        } else if rl.is_key_pressed(KEY_ENTER) && self.state == State::GameOver {
+            self.snake.reset();
+            self.score = 0;
+            self.start_time = Instant::now();
             self.state = State::Running;
         }
     }
